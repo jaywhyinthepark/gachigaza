@@ -35,6 +35,7 @@ function reply(data: unknown, status = 200) {
   });
 }
 function error(e: unknown) {
+  console.error("BNK_SERVER_ERROR", (e as { code?: string })?.code ?? "UNKNOWN");
   if (e instanceof Problem) return reply({ error: e.message }, e.code);
   if ((e as { code?: string }).code === "23505")
     return reply({ error: "이미 등록된 일정 또는 신청이다." }, 409);
