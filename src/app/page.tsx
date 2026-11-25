@@ -3,6 +3,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { recommend, type Ride, type Mode } from "../lib/matching";
+const departureTimes = Array.from({ length: 24 * 6 }, (_, index) => {
+  const hour = String(Math.floor(index / 6)).padStart(2, "0");
+  const minute = String((index % 6) * 10).padStart(2, "0");
+  return `${hour}:${minute}`;
+});
 const places = [
   "부산역",
   "김해공항",
@@ -122,7 +127,12 @@ export default function Home() {
     setDestination("부산역");
     setNotice("");
   }
+  const editingRide = edit ? rides.find((ride) => ride.id === edit) : undefined;
+  const legacyTime = editingRide && editingRide.date === rideDate && !departureTimes.includes(editingRide.time)
+    ? editingRide.time : undefined;
   function register() {
+    if (!departureTimes.includes(rideTime) && rideTime !== legacyTime)
+      return setNotice("출발 예정 시각을 10분 단위로 선택해 주세요.");
     const from =
       mode === "입소" && origin === "기타(직접 입력)" ? other.trim() : origin;
     const to =
@@ -412,12 +422,15 @@ export default function Home() {
                   <label htmlFor="rideTime">
                     출발 예정 시각
                   </label>
-                  <input
+                  <select
                     id="rideTime"
-                    type="time"
-                    value={rideTime}
+                    value={departureTimes.includes(rideTime) || rideTime === legacyTime ? rideTime : ""}
                     onChange={(e) => setRideTime(e.target.value)}
-                  />
+                  >
+                    <option value="" disabled>시각을 선택해 주세요</option>
+                    {legacyTime && <option value={legacyTime}>{legacyTime} (기존 시각)</option>}
+                    {departureTimes.map((time) => <option key={time} value={time}>{time}</option>)}
+                  </select>
                 </div>
                 <div className="field">
                   <label>총 탑승 인원 (본인 포함)</label>

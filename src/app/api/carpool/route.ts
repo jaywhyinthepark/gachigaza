@@ -150,6 +150,7 @@ export async function POST(req: NextRequest) {
     try {
       await db.query("begin");
       const user = await member(req, db);
+      let originalMoment: Date | undefined;
       let id = b.id,
         seats = 1;
       if (b.action !== "create") {
@@ -160,6 +161,7 @@ export async function POST(req: NextRequest) {
           )
         ).rows[0];
         if (!ride) fail(404, "삭제된 일정입니다.");
+        originalMoment = ride.moment;
         const own = ride.creator === user.id;
         if (
           ["edit", "delete", "approved", "rejected"].includes(b.action) &&
@@ -214,6 +216,8 @@ export async function POST(req: NextRequest) {
             new Date(+moment + 9 * 3600000).toISOString().slice(0, 10) !== date
           )
             fail(400, "미래의 날짜와 시각을 입력해 주세요.");
+          if (moment.getUTCMinutes() % 10 !== 0 && +moment !== originalMoment?.getTime())
+            fail(400, "출발 예정 시각을 10분 단위로 선택해 주세요.");
           const inputs = [
             user.id,
             b.mode,
