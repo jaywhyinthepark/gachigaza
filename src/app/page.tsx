@@ -23,6 +23,7 @@ const places = [
   "덕천",
   "사상",
   "대저",
+  "일광역",
   "기타(직접 입력)",
 ];
 const localDate = (d: Date) =>
@@ -36,6 +37,15 @@ const districts: Record<string, string> = {
   광안리: "광안역, 금련산역",
   센텀: "센텀시티역, 벡스코역",
 };
+function displayDate(value: string) {
+  if (!value) return "";
+  const date = new Date(value + "T00:00:00+09:00");
+  if (!Number.isFinite(+date)) return "";
+  const weekday = new Intl.DateTimeFormat("ko-KR", {
+    weekday: "short", timeZone: "Asia/Seoul",
+  }).format(date);
+  return `${value}(${weekday})`;
+}
 export default function Home() {
   const [ready, setReady] = useState(false);
   const [nickname, setNickname] = useState("");
@@ -57,6 +67,7 @@ export default function Home() {
   const [name, setName] = useState("");
   const [edit, setEdit] = useState("");
   const [busy, setBusy] = useState(false);
+  const formReturnPage = useRef<"board" | "mine" | "detail">("board");
   const revision = useRef(0);
   const submitting = useRef(false);
   async function refresh() {
@@ -178,16 +189,17 @@ export default function Home() {
     );
   }
   function startForm(r?: Ride) {
+    if (page !== "create") formReturnPage.current = page;
     const m = r?.mode ?? mode;
     const place = m === "입소" ? r?.origin : r?.destination;
     const choice = place
       ? places.includes(place)
         ? place
-        : places[14]
+        : "기타(직접 입력)"
       : places[0];
     setEdit(r?.id ?? "");
     setMode(m);
-    setOther(place && choice === places[14] ? place : "");
+    setOther(place && choice === "기타(직접 입력)" ? place : "");
     setOrigin(m === "입소" ? choice : (r?.origin ?? "연수원"));
     setDestination(m === "퇴소" ? choice : "부산역");
     setRideDate(r?.date ?? localDate(new Date()));
@@ -297,7 +309,7 @@ export default function Home() {
                         }}
                       >
                         <strong>
-                          {r.date} · {r.time} · {r.origin} → {r.destination}
+                          {displayDate(r.date)} · {r.time} · {r.origin} → {r.destination}
                         </strong>
                         <span>
                           {r.rank === 0 ? "동일 장소" : "인근 생활권"} ·{" "}
@@ -326,7 +338,7 @@ export default function Home() {
                       }}
                     >
                       <div className="rideTop">
-                        <strong>{r.date} · {r.time}</strong>
+                        <strong>{displayDate(r.date)} · {r.time}</strong>
                         <span className="pill">
                           {r.closed || r.approved >= r.capacity
                             ? "모집 완료"
@@ -348,6 +360,10 @@ export default function Home() {
             )}
             {page === "create" && (
               <section>
+                <button type="button" className="back" onClick={() => {
+                  setPage(formReturnPage.current);
+                  setNotice("");
+                }}>← 뒤로 가기</button>
                 <h2>{edit ? "카풀 일정 수정" : "내 카풀 일정 등록"}</h2>
                 <div className="tabs">
                   <button
@@ -411,12 +427,18 @@ export default function Home() {
                   <label htmlFor="rideDate">
                     {mode === "입소" ? "출발일" : "퇴소 날짜"}
                   </label>
-                  <input
-                    id="rideDate"
-                    type="date"
-                    value={rideDate}
-                    onChange={(e) => setRideDate(e.target.value)}
-                  />
+                  <div className="datePicker">
+                    <input
+                      id="rideDate"
+                      type="date"
+                      value={rideDate}
+                      onChange={(e) => setRideDate(e.target.value)}
+                      aria-describedby="selectedRideDate"
+                    />
+                    <span id="selectedRideDate" className="dateDisplay">
+                      {displayDate(rideDate) || "날짜를 선택해 주세요"}
+                    </span>
+                  </div>
                 </div>
                 <div className="field">
                   <label htmlFor="rideTime">
@@ -474,7 +496,7 @@ export default function Home() {
                 <h2>카풀 상세</h2>
                 <div className="detailCard">
                   <span className="pill">
-                    {current.mode} · {current.date}
+                    {current.mode} · {displayDate(current.date)}
                   </span>
                   <h3>{current.time}</h3>
                   <strong>
@@ -615,7 +637,7 @@ export default function Home() {
                     }}
                   >
                     <strong>
-                      {r.date} · {r.time}
+                      {displayDate(r.date)} · {r.time}
                     </strong>
                     <span>
                       {r.origin} → {r.destination}

@@ -347,7 +347,8 @@ select {
   color: #1269bd;
 }
 .bottomNav small {
-  font-size: 11px;
+  font-size: 14px;
+  font-weight: 600;
   color: inherit;
 }
 @media (max-width: 450px) {
@@ -421,4 +422,16 @@ select {
 }
 .field small {
   font-size: 12px;
+}
+
+.datePicker { position: relative; }
+.datePicker input { color: transparent; }
+.datePicker input::-webkit-datetime-edit { opacity: 0; }
+.dateDisplay {
+  position: absolute;
+  top: 50%;
+  left: 10px;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: #152638;
 }
