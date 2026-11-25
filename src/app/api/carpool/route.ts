@@ -54,12 +54,12 @@ function error(e: unknown) {
   console.error("BNK_SERVER_ERROR", (e as { code?: string })?.code ?? "UNKNOWN");
   if (e instanceof Problem) return reply({ error: e.message }, e.code);
   if ((e as { code?: string }).code === "23505")
-    return reply({ error: "이미 등록된 일정 또는 신청이다." }, 409);
+    return reply({ error: "이미 등록된 일정 또는 신청입니다." }, 409);
   return reply({ error: "서버 연결을 확인한 후 다시 시도해 주세요." }, 503);
 }
 async function member(req: NextRequest, db: Pool | PoolClient) {
   const token = req.cookies.get(cookie)?.value;
-  if (!token || !/^[a-f0-9]{64}$/.test(token)) fail(401, "입장이 필요하다.");
+  if (!token || !/^[a-f0-9]{64}$/.test(token)) fail(401, "입장이 필요합니다.");
   const result = await db.query(
     "select id,nickname from carpool.members where token_hash=$1",
     [hash(token).toString("hex")],
@@ -87,13 +87,13 @@ function uuid(v: unknown) {
     typeof v !== "string" ||
     !/^[a-f\d]{8}(-[a-f\d]{4}){3}-[a-f\d]{12}$/i.test(v)
   )
-    fail(400, "잘못된 식별자이다.");
+    fail(400, "잘못된 식별자입니다.");
   return v;
 }
 async function login(req: NextRequest, b: Record<string, unknown>) {
   const secret = process.env.ENTRY_CODE,
     salt = process.env.RATE_LIMIT_SECRET;
-  if (!secret || !salt) fail(503, "서버 입장 설정이 필요하다.");
+  if (!secret || !salt) fail(503, "서버 입장 설정이 필요합니다.");
   const ip =
     process.env.VERCEL === "1"
       ? (req.headers.get("x-vercel-forwarded-for") || "shared").split(",")[0]
@@ -108,7 +108,7 @@ async function login(req: NextRequest, b: Record<string, unknown>) {
     [key, cost],
   );
   if (limit.rows[0].attempts >= 10)
-    fail(429, "입장 시도가 많다. 15분 뒤 다시 시도해 주세요.");
+    fail(429, "입장 시도가 많습니다. 15분 뒤 다시 시도해 주세요.");
   if (!valid) fail(403, "입장코드를 확인해 주세요.");
   const name = string(b.nickname, 20);
   if (!name) fail(400, "닉네임을 입력해 주세요.");
@@ -135,16 +135,16 @@ export async function POST(req: NextRequest) {
     )
       fail(403, "요청 주소를 확인해 주세요.");
     if (!req.headers.get("content-type")?.startsWith("application/json"))
-      fail(415, "JSON 요청이 필요하다.");
+      fail(415, "JSON 요청이 필요합니다.");
     const raw = await req.text();
-    if (raw.length > 4096) fail(413, "입력값이 너무 길다.");
+    if (raw.length > 4096) fail(413, "입력값이 너무 깁니다.");
     let b;
     try {
       b = JSON.parse(raw);
     } catch {
-      fail(400, "잘못된 요청이다.");
+      fail(400, "잘못된 요청입니다.");
     }
-    if (!b || typeof b !== "object") fail(400, "잘못된 요청이다.");
+    if (!b || typeof b !== "object") fail(400, "잘못된 요청입니다.");
     if (b.action === "login") return await login(req, b);
     const db = await pool.connect();
     try {
@@ -159,18 +159,18 @@ export async function POST(req: NextRequest) {
             [uuid(id)],
           )
         ).rows[0];
-        if (!ride) fail(404, "삭제된 일정이다.");
+        if (!ride) fail(404, "삭제된 일정입니다.");
         const own = ride.creator === user.id;
         if (
           ["edit", "delete", "approved", "rejected"].includes(b.action) &&
           !own
         )
-          fail(403, "작성자만 관리할 수 있다.");
+          fail(403, "작성자만 관리할 수 있습니다.");
         if (
           ["apply", "approved"].includes(b.action) &&
           ride.moment.getTime() <= Date.now()
         )
-          fail(409, "이동 시각이 지났다.");
+          fail(409, "이동 시각이 지났습니다.");
         seats += (
           await db.query(
             "select count(*)::int n from carpool.requests where ride=$1 and status='approved'",
@@ -178,9 +178,9 @@ export async function POST(req: NextRequest) {
           )
         ).rows[0].n;
         if (["apply", "approved"].includes(b.action) && seats >= ride.capacity)
-          fail(409, "모집이 완료되었다.");
+          fail(409, "모집이 완료되었습니다.");
         if (b.action === "apply" && own)
-          fail(409, "자기 일정에는 신청할 수 없다.");
+          fail(409, "자기 일정에는 신청할 수 없습니다.");
       }
       switch (b.action) {
         case "create":
@@ -262,10 +262,10 @@ export async function POST(req: NextRequest) {
               )
             ).rowCount
           )
-            fail(409, "이미 처리된 신청이다.");
+            fail(409, "이미 처리된 신청입니다.");
           break;
         default:
-          fail(400, "잘못된 작업이다.");
+          fail(400, "잘못된 작업입니다.");
       }
       await db.query("commit");
       return reply({ id });

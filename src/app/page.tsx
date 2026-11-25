@@ -40,14 +40,12 @@ export default function Home() {
   );
   const [rides, setRides] = useState<Ride[]>([]);
   const [selected, setSelected] = useState("");
-  const [dateFilter, setDateFilter] = useState(localDate(new Date()));
-  const [placeFilter, setPlaceFilter] = useState("전체");
   const [origin, setOrigin] = useState("부산역");
   const [destination, setDestination] = useState("부산역");
   const [other, setOther] = useState("");
   const [rideDate, setRideDate] = useState(localDate(new Date()));
   const [rideTime, setRideTime] = useState("13:20");
-  const [capacity, setCapacity] = useState(3);
+  const [capacity, setCapacity] = useState(4);
   const [link, setLink] = useState("");
   const [notice, setNotice] = useState("");
   const [code, setCode] = useState("");
@@ -73,7 +71,7 @@ export default function Home() {
   useEffect(() => {
     const reload = () =>
       refresh()
-        .catch(() => setNotice("일정을 불러오지 못했다. 연결을 확인해 주세요."))
+        .catch(() => setNotice("일정을 불러오지 못했습니다. 연결을 확인해 주세요."))
         .finally(() => setReady(true));
     reload();
     const timer = setInterval(reload, 15000);
@@ -111,25 +109,15 @@ export default function Home() {
     }
   }
   const listed = useMemo(
-    () =>
-      rides
-        .filter(
-          (r) =>
-            r.mode === mode &&
-            r.date === dateFilter &&
-            (placeFilter === "전체" ||
-              r.origin === placeFilter ||
-              r.destination === placeFilter),
-        )
-        .sort((a, b) => a.time.localeCompare(b.time)),
-    [rides, mode, dateFilter, placeFilter],
+    () => rides.filter(r => r.mode === mode).sort((a, b) =>
+      a.date.localeCompare(b.date) || a.time.localeCompare(b.time)),
+    [rides, mode],
   );
   const current = rides.find((r) => r.id === selected);
   const myRides = rides.filter((r) => r.owned || r.requests.length > 0);
   const recommendations = recommend(rides, listed, mode);
   function changeMode(m: Mode) {
     setMode(m);
-    setPlaceFilter("전체");
     setOrigin(m === "입소" ? "부산역" : "연수원");
     setDestination("부산역");
     setNotice("");
@@ -144,22 +132,22 @@ export default function Home() {
           ? "연수원"
           : destination;
     if (!nickname.trim())
-      return setNotice("먼저 상단에서 닉네임을 입력해야 한다.");
+      return setNotice("먼저 상단에서 닉네임을 입력해 주세요.");
     if (
       !from ||
       !to ||
       !rideDate ||
       !/^([01]\d|2[0-3]):[0-5]\d$/.test(rideTime)
     )
-      return setNotice("장소, 날짜와 시간을 정확히 입력해야 한다.");
+      return setNotice("장소, 날짜와 시간을 정확히 입력해 주세요.");
     if (other.length > 50)
-      return setNotice("기타 장소명은 50자 이내로 입력한다.");
+      return setNotice("기타 장소명은 50자 이내로 입력해 주세요.");
     if (!validChatLink(link.trim()))
       return setNotice(
-        "카카오톡 오픈채팅 링크는 https://open.kakao.com/ 형식이어야 한다.",
+        "카카오톡 오픈채팅 링크는 https://open.kakao.com/ 형식으로 입력해 주세요.",
       );
     if (new Date(`${rideDate}T${rideTime}:00+09:00`).getTime() <= Date.now())
-      return setNotice("미래의 이동 시각만 등록할 수 있다.");
+      return setNotice("미래의 이동 시각만 등록할 수 있습니다.");
     void write(
       edit ? "edit" : "create",
       {
@@ -175,8 +163,6 @@ export default function Home() {
       (id) => {
         setEdit("");
         setSelected(id);
-        setDateFilter(rideDate);
-        setPlaceFilter("전체");
         setPage("detail");
       },
     );
@@ -194,22 +180,13 @@ export default function Home() {
     setOther(place && choice === places[14] ? place : "");
     setOrigin(m === "입소" ? choice : (r?.origin ?? "연수원"));
     setDestination(m === "퇴소" ? choice : "부산역");
-    setRideDate(r?.date ?? dateFilter);
+    setRideDate(r?.date ?? localDate(new Date()));
     setRideTime(r?.time ?? "13:20");
-    setCapacity(r?.capacity ?? 3);
+    setCapacity(r?.capacity ?? 4);
     setLink(r?.link ?? "");
     setNotice("");
     setPage("create");
   }
-  const filterPlaces = [
-    ...new Set([
-      ...(mode === "퇴소" ? ["연수원", "본점"] : []),
-      ...places.slice(0, -1),
-      ...rides
-        .filter((r) => r.mode === mode && r.date === dateFilter)
-        .map((r) => (mode === "입소" ? r.origin : r.destination)),
-    ]),
-  ];
   const inputPlaces = places.map((p) => (
     <option key={p} value={p}>
       {districts[p] ? p + " (" + districts[p] + ")" : p}
@@ -220,8 +197,8 @@ export default function Home() {
       <main className="app">
         <header className="top">
           <div>
-            <h1>BNK 카풀</h1>
-            <p>부산은행 동기 카풀 게시판</p>
+            <h1>같이가자27행번</h1>
+            <p>BNK27행번 카풀게시판</p>
           </div>
           {nickname && <strong>{nickname}</strong>}
         </header>
@@ -258,8 +235,8 @@ export default function Home() {
               입장하기
             </button>
             <p className="info">
-              같은 브라우저에서는 입장이 유지된다. 기기나 브라우저를 바꾸면 새
-              계정으로 입장한다.
+              같은 브라우저에서는 입장이 유지됩니다. 기기나 브라우저를 바꾸면 새
+              계정으로 입장해 주세요.
             </p>
           </form>
         ) : (
@@ -287,9 +264,7 @@ export default function Home() {
                       : "연수원·본점 → 부산 각지"}
                   </strong>
                   <p>
-                    {mode === "입소"
-                      ? "거점 도착 예정 시각 기준"
-                      : "연수원·본점 출발 예정 시각 기준"}
+                    출발 예정 시각 기준
                   </p>
                 </div>
                 <button className="primary" onClick={() => startForm()}>
@@ -299,8 +274,8 @@ export default function Home() {
                   <section>
                     <h2>나와 맞는 카풀</h2>
                     <p className="info">
-                      내 일정과 30분 이내인 카풀이다. 인근 생활권은 실제 택시
-                      경로를 확인한 뒤 신청한다.
+                      내 일정과 30분 이내인 카풀입니다. 인근 생활권은 실제 택시
+                      경로를 확인한 뒤 신청해 주세요.
                     </p>
                     {recommendations.map((r) => (
                       <button
@@ -312,7 +287,7 @@ export default function Home() {
                         }}
                       >
                         <strong>
-                          {r.time} · {r.origin} → {r.destination}
+                          {r.date} · {r.time} · {r.origin} → {r.destination}
                         </strong>
                         <span>
                           {r.rank === 0 ? "동일 장소" : "인근 생활권"} ·{" "}
@@ -327,32 +302,8 @@ export default function Home() {
                     <h2>동기 이동 일정</h2>
                     <small>{listed.length}건 · 시간순</small>
                   </div>
-                  <div className="filters">
-                    <label>
-                      날짜
-                      <input
-                        type="date"
-                        value={dateFilter}
-                        onChange={(e) => setDateFilter(e.target.value)}
-                      />
-                    </label>
-                    <label>
-                      장소
-                      <select
-                        value={placeFilter}
-                        onChange={(e) => setPlaceFilter(e.target.value)}
-                      >
-                        <option value="전체">전체 장소</option>
-                        {filterPlaces.map((p) => (
-                          <option key={p} value={p}>
-                            {p}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                  </div>
                   {listed.length === 0 && (
-                    <p className="empty">선택한 조건의 일정이 없다.</p>
+                    <p className="empty">아직 등록된 {mode} 일정이 없습니다.</p>
                   )}
                   {listed.map((r) => (
                     <button
@@ -365,7 +316,7 @@ export default function Home() {
                       }}
                     >
                       <div className="rideTop">
-                        <strong>{r.time}</strong>
+                        <strong>{r.date} · {r.time}</strong>
                         <span className="pill">
                           {r.closed || r.approved >= r.capacity
                             ? "모집 완료"
@@ -448,7 +399,7 @@ export default function Home() {
                 )}
                 <div className="field">
                   <label htmlFor="rideDate">
-                    {mode === "입소" ? "출발 거점 도착 날짜" : "퇴소 날짜"}
+                    {mode === "입소" ? "출발일" : "퇴소 날짜"}
                   </label>
                   <input
                     id="rideDate"
@@ -459,9 +410,7 @@ export default function Home() {
                 </div>
                 <div className="field">
                   <label htmlFor="rideTime">
-                    {mode === "입소"
-                      ? "거점 도착 예정 시각"
-                      : "본점·연수원 출발 예정 시각"}
+                    출발 예정 시각
                   </label>
                   <input
                     id="rideTime"
@@ -483,6 +432,7 @@ export default function Home() {
                       </button>
                     ))}
                   </div>
+                  <small>* 캐리어가 많아 탑승 인원을 줄여야 할 때는 2명 또는 3명을 선택해 주세요.</small>
                 </div>
                 <div className="field">
                   <label htmlFor="link">카카오톡 오픈채팅 링크 (선택)</label>
@@ -494,8 +444,8 @@ export default function Home() {
                     placeholder="https://open.kakao.com/..."
                   />
                   <small>
-                    작성자와 승인된 동승자만 볼 수 있다. 링크를 외부에 공유하면
-                    다른 사람도 입장할 수 있다.
+                    작성자와 승인된 동승자만 볼 수 있습니다. 링크를 외부에 공유하면
+                    다른 사람도 입장할 수 있습니다.
                   </small>
                 </div>
                 <button className="primary" disabled={busy} onClick={register}>
@@ -574,7 +524,7 @@ export default function Home() {
                     <button
                       className="danger"
                       onClick={() => {
-                        if (confirm("일정과 신청 내역을 삭제할까?"))
+                        if (confirm("일정과 신청 내역을 삭제하시겠습니까?"))
                           void write("delete", { id: current.id }, () =>
                             setPage("mine"),
                           );
@@ -586,7 +536,7 @@ export default function Home() {
                 ) : (
                   <>
                     <p className="info">
-                      작성자가 승인하면 등록된 오픈채팅 링크를 확인할 수 있다.
+                      작성자가 승인하면 등록된 오픈채팅 링크를 확인할 수 있습니다.
                     </p>
                     {current.requests.length > 0 ? (
                       <>
@@ -631,8 +581,8 @@ export default function Home() {
                   </a>
                 )}
                 <p className="info">
-                  실제 집결 장소와 시각은 동승자끼리 조율한다. 일정과 신청
-                  내역은 이동 예정 시각 24시간 후 삭제된다.
+                  실제 집결 장소와 시각은 동승자끼리 조율해 주세요. 일정과 신청
+                  내역은 이동 예정 시각 24시간 후 삭제됩니다.
                 </p>
               </section>
             )}
@@ -640,7 +590,7 @@ export default function Home() {
               <section>
                 <h2>내 일정</h2>
                 {myRides.length === 0 && (
-                  <p className="empty">아직 작성하거나 신청한 일정이 없다.</p>
+                  <p className="empty">아직 작성하거나 신청한 일정이 없습니다.</p>
                 )}
                 {myRides.map((r) => (
                   <button
@@ -672,7 +622,7 @@ export default function Home() {
               </section>
             )}
             {page === "detail" && !current && (
-              <p className="empty">삭제되었거나 만료된 일정이다.</p>
+              <p className="empty">삭제되었거나 만료된 일정입니다.</p>
             )}
             <nav className="bottomNav">
               <button
