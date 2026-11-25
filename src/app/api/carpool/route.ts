@@ -10,7 +10,7 @@ import { boardQuery } from "../../../lib/board";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-const pool = new Pool({
+
 const databaseUrl = process.env.DATABASE_URL;
 const ca = process.env.SUPABASE_DB_CA?.trim();
 
@@ -30,7 +30,6 @@ const pool = new Pool({
   ...getDatabaseConfig(),
   max: 3,
   connectionTimeoutMillis: 8000,
-});
 });
 const cookie = process.env.NODE_ENV === "production" ? "__Host-bnk" : "bnk";
 const hash = (s: string) => createHash("sha256").update(s).digest();
